@@ -1,0 +1,39 @@
+
+service: lambda-apigw-dotnet
+
+
+plugins:
+  - serverless-offline
+provider:
+  name: aws
+  runtime: dotnetcore2.1
+  region: ${opt:region, 'us-east-1'}
+  stage: ${self:custom.stage}
+  cfnRole: arn:aws:iam::${self:custom.${self:provider.stage}.account_id}:role/GBMAWSCloudFormationExecutionRole
+  # Note: you need to create this role:
+  role: arn:aws:iam::${self:custom.${self:custom.stage}.account_id}:role/GBMAWSLambdaExecutionRole
+  memorySize: 128
+  timeout: 29
+  versionFunctions: false
+
+
+custom:
+  stage: ${opt:env, 'dev'}
+  dev:
+    account_id: ${opt:account-id}
+
+
+package:
+  artifact: src/deploy-package.zip
+
+
+functions:
+  BluePrintAWSLambdaDotNet:
+    # {assemblyname}::{namespace}.{class}::Function
+    handler: src::src.LambdaEntryPoint::FunctionHandlerAsync
+    description: Sample entry point
+    events:
+    - http:
+        path: /{proxy+}
+        method: ANY
+        cors: true
